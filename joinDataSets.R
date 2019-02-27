@@ -55,7 +55,7 @@ ggplot(fchs_final) +
   facet_wrap(~system_bin)
 
 m0 <- lm(fchs_inv$avgNutriScore ~ 1)
-m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$items + fchs_inv$hs_size + fchs_inv$total_vis_points + fchs_inv$avgInvRating + fchs_inv$num_male + fchs_inv$num_female + fchs_inv$num_african_american + fchs_inv$num_american_indians + fchs_inv$num_asian + fchs_inv$num_hawaiian_or_pacific_islander + fchs_inv$num_multi_race + fchs_inv$num_other_race + fchs_inv$num_white + fchs_inv$upTo_8thGrade + fchs_inv$hsGrad_Ged + fchs_inv$hsGrad_or_Ged_some_secondary + fchs_inv$college_grad + fchs_inv$hispanic_or_latino + fchs_inv$not_hispanic + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + fchs_inv$ethnicity, data = fchs_inv)
+m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$items + fchs_inv$hs_size + fchs_inv$total_vis_points + fchs_inv$avgInvRating + fchs_inv$num_male + fchs_inv$num_female + fchs_inv$num_african_american + fchs_inv$num_american_indians + fchs_inv$num_asian + fchs_inv$num_hawaiian_or_pacific_islander + fchs_inv$num_multi_race + fchs_inv$num_other_race + fchs_inv$num_white + fchs_inv$upTo_8thGrade + fchs_inv$hsGrad_Ged + fchs_inv$hsGrad_or_Ged_some_secondary + fchs_inv$college_grad + fchs_inv$hispanic_or_latino + fchs_inv$not_hispanic + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + fchs_inv$ethnicity + fchs_inv$system_bin, data = fchs_inv)
 
 m2 <- step(m0, scope=list(lower=m0, upper=m1, direction = "both"), alpha = 0.05)
 
