@@ -1,16 +1,23 @@
 library(sqldf)
 library(car)
+library(ggplot2)
 
 fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
 hs <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_served_households.csv', header = T) #Households raw data
 visits <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_visits.csv', header = T) #Visits raw data
 inventory_wide <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory_wide.csv', header = T)
 inv_avg_nutri <- read.csv('/Users/tannerthurman/Desktop/DMARC data/InvAvgNutri.csv', header = T)
+inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
 
-inv_avg_nutri <- inv_avg_nutri[, -c(1)]
-inv_avg_nutri$StartDate <- as.Date(inv_avg_nutri$StartDate, format = '%m/%d/%Y')
-inv_avg_nutri$EndDate <- as.Date(inv_avg_nutri$EndDate, format = '%m/%d/%Y')
-hs <- hs[,-c(2)] #remove the individual_id field
+# Getting average nutri score for inventory during a time period
+inv_avg_nutri = sqldf("select StartDate, EndDate, avg(Rating) as 'avgInvRating' from inventory group by StartDate, EndDate")
+#write.csv(inventory_avg_nutri, file = "InvAvgNutri.csv")
+
+
+#inv_avg_nutri <- inv_avg_nutri[, -c(1)]
+#inv_avg_nutri$StartDate <- as.Date(inv_avg_nutri$StartDate, format = '%m/%d/%Y')
+#inv_avg_nutri$EndDate <- as.Date(inv_avg_nutri$EndDate, format = '%m/%d/%Y')
+#hs <- hs[,-c(2)] #remove the individual_id field
 
 hsdistinctquery <- 'select afn, served_date, avg(num_male) as num_male, avg(num_female) as num_female, avg(num_african_american) as num_african_american, avg(num_white) as num_white,
 avg(num_american_indian) as num_american_indians, avg(num_asian) as num_asian, avg(num_hawaiian_or_pacific_islander) as num_hawaiian_or_pacific_islander,
@@ -25,6 +32,7 @@ fc_vis <- sqldf(fcjoinvis)
 fc_join_hs <- "select distinct * from fc_vis join hs_done on fc_vis.serviceDate = hs_done.served_date and fc_vis.afn = hs_done.afn"
 fchs_final <- sqldf(fc_join_hs)
 
+
 fchs_final$served_date = as.Date(fchs_final$served_date, format = '%Y-%m-%d')
 fchs_final <- fchs_final[,-c(6,13)]
 fchs_final$hs_size <- as.factor(fchs_final$hs_size)
@@ -34,7 +42,7 @@ dummyVar1 = c("2017-9-1")
 projectStartDate = as.Date(dummyVar1, format = "%Y-$m-%d") #Variable to hold the date when the initiative was started
 
 for(i in 1:length(fchs_final$hs_size)){
-  if(fchs_final$served_date[i] > as.Date("2017-09-01", format = "%Y-%m-%d")){
+  if(fchs_final$served_date[i] >= as.Date("2017-09-01", format = "%Y-%m-%d")){   ##Needs to be greater than or equal to
     fchs_final$system_bin[i] <- as.integer(1)
   } else {
     fchs_final$system_bin[i] <- as.integer(0)
@@ -66,6 +74,20 @@ m2 <- step(m0, scope=list(lower=m0, upper=m1, direction = "both"), alpha = 0.05)
 summary(m1)
 summary(m2)
 
+
 ggplot(data = fchs_final) + geom_point(aes(x = time, y = avgNutriScore)) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, col = "Red")
 
 ggplot(data = fchs_final) + geom_point(aes(x = time, y = items)) + geom_smooth(aes(x = time, y = items, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, col = "Red")
+
+
+#model <- glm(items ~ fchs_inv$system_bin + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
+   # family=poisson, data=fchs_inv)
+
+#summary(model)
+
+
+model <- glm(items ~ fchs_final$system_bin + offset(log(as.numeric(fchs_final$hs_size))),
+             family=poisson, data=fchs_final)
+
+summary(model)
+
