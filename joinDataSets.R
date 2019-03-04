@@ -1,12 +1,13 @@
 library(sqldf)
 library(car)
+library(ggplot2)
 
 fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
 hs <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_served_households.csv', header = T) #Households raw data
 visits <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_visits.csv', header = T) #Visits raw data
 inventory_wide <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory_wide.csv', header = T)
 inv_avg_nutri <- read.csv('/Users/tannerthurman/Desktop/DMARC data/InvAvgNutri.csv', header = T)
-inventory <- read.csv()   #pass in the inventory file in here (not the wide one)
+inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
 
 # Getting average nutri score for inventory during a time period
 inv_avg_nutri = sqldf("select StartDate, EndDate, avg(Rating) as 'avgInvRating' from inventory group by StartDate, EndDate")
@@ -37,7 +38,7 @@ fchs_final <- fchs_final[,-c(6,13)]
 fchs_final$hs_size <- as.factor(fchs_final$hs_size)
 
 for(i in 1:length(fchs_final$hs_size)){
-  if(fchs_final$served_date[i] > as.Date("2017-09-01", format = "%Y-%m-%d")){
+  if(fchs_final$served_date[i] >= as.Date("2017-09-01", format = "%Y-%m-%d")){   ##Needs to be greater than or equal to
     fchs_final$system_bin[i] <- as.integer(1)
   } else {
     fchs_final$system_bin[i] <- as.integer(0)
@@ -62,9 +63,21 @@ ggplot(fchs_final) +
   facet_wrap(~system_bin)
 
 m0 <- lm(fchs_inv$avgNutriScore ~ 1)
-m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$items + fchs_inv$hs_size + fchs_inv$total_vis_points + fchs_inv$avgInvRating + fchs_inv$num_male + fchs_inv$num_female + fchs_inv$num_african_american + fchs_inv$num_american_indians + fchs_inv$num_asian + fchs_inv$num_hawaiian_or_pacific_islander + fchs_inv$num_multi_race + fchs_inv$num_other_race + fchs_inv$num_white + fchs_inv$upTo_8thGrade + fchs_inv$hsGrad_Ged + fchs_inv$hsGrad_or_Ged_some_secondary + fchs_inv$college_grad + fchs_inv$hispanic_or_latino + fchs_inv$not_hispanic + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + fchs_inv$ethnicity, data = fchs_inv)
+m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$items + fchs_inv$hs_size + fchs_inv$total_vis_points + fchs_inv$avgInvRating + fchs_inv$num_male + fchs_inv$num_female + fchs_inv$num_african_american + fchs_inv$num_american_indians + fchs_inv$num_asian + fchs_inv$num_hawaiian_or_pacific_islander + fchs_inv$num_multi_race + fchs_inv$num_other_race + fchs_inv$num_white + fchs_inv$upTo_8thGrade + fchs_inv$hsGrad_Ged + fchs_inv$hsGrad_or_Ged_some_secondary + fchs_inv$college_grad + fchs_inv$hispanic_or_latino + fchs_inv$not_hispanic + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + fchs_inv$ethnicity + fchs_inv$system_bin, data = fchs_inv)
 
 m2 <- step(m0, scope=list(lower=m0, upper=m1, direction = "both"), alpha = 0.05)
 
 summary(m1)
 summary(m2)
+
+
+#model <- glm(items ~ fchs_inv$system_bin + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
+   # family=poisson, data=fchs_inv)
+
+#summary(model)
+
+
+model <- glm(items ~ fchs_inv$system_bin + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
+             family=poisson, data=fchs_inv)
+
+summary(model)
