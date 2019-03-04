@@ -1,11 +1,12 @@
 library(sqldf)
 library(car)
+library(ggplot2)
 
-fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
-hs <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_served_households.csv', header = T) #Households raw data
-visits <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_visits.csv', header = T) #Visits raw data
-inventory_wide <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory_wide.csv', header = T)
-inv_avg_nutri <- read.csv('/Users/tannerthurman/Desktop/DMARC data/InvAvgNutri.csv', header = T)
+fc <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_foodChoices.csv', header = T) #fc raw data
+hs <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_served_households.csv', header = T) #Households raw data
+visits <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_visits.csv', header = T) #Visits raw data
+inventory_wide <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/inventory_wide.csv', header = T)
+inv_avg_nutri <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/InvAvgNutri.csv', header = T)
 
 inv_avg_nutri <- inv_avg_nutri[, -c(1)]
 inv_avg_nutri$StartDate <- as.Date(inv_avg_nutri$StartDate, format = '%m/%d/%Y')
@@ -30,7 +31,7 @@ fchs_final <- fchs_final[,-c(6,13)]
 fchs_final$hs_size <- as.factor(fchs_final$hs_size)
 
 for(i in 1:length(fchs_final$hs_size)){
-  if(fchs_final$served_date[i] > as.Date("2017-09-01", format = "%Y-%m-%d")){
+  if(fchs_final$served_date[i] >= as.Date("2017-09-01", format = "%Y-%m-%d")){   ##Needs to be greater than or equal to
     fchs_final$system_bin[i] <- as.integer(1)
   } else {
     fchs_final$system_bin[i] <- as.integer(0)
@@ -61,3 +62,15 @@ m2 <- step(m0, scope=list(lower=m0, upper=m1, direction = "both"), alpha = 0.05)
 
 summary(m1)
 summary(m2)
+
+
+#model <- glm(items ~ fchs_inv$system_bin + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
+   # family=poisson, data=fchs_inv)
+
+#summary(model)
+
+
+model <- glm(items ~ fchs_inv$system_bin + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
+             family=poisson, data=fchs_inv)
+
+summary(model)
