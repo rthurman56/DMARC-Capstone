@@ -11,8 +11,8 @@ inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', h
 # Getting average nutri score for inventory during a time period
 inv_avg_nutri = sqldf("select StartDate, EndDate, avg(Rating) as 'avgInvRating' from inventory group by StartDate, EndDate")
 
-inv_avg_nutri$StartDate <- as.Date(inv_avg_nutri$StartDate, format = '%m/%d/%Y')
-inv_avg_nutri$EndDate <- as.Date(inv_avg_nutri$EndDate, format = '%m/%d/%Y')
+inv_avg_nutri$StartDate <- as.Date(inv_avg_nutri$StartDate, format = '%Y-%m-%d')
+inv_avg_nutri$EndDate <- as.Date(inv_avg_nutri$EndDate, format = '%Y-%m-%d')
 hs <- hs[,-c(2)] #remove the individual_id field
 
 hsdistinctquery <- 'select afn, served_date, avg(num_male) as num_male, avg(num_female) as num_female, avg(num_african_american) as num_african_american, avg(num_white) as num_white,
@@ -27,7 +27,6 @@ fcjoinvis <- 'select fcbyPurchase.*, serviceDate, individual_id, gender, race, e
 fc_vis <- sqldf(fcjoinvis)
 fc_join_hs <- "select distinct * from fc_vis join hs_done on fc_vis.serviceDate = hs_done.served_date and fc_vis.afn = hs_done.afn"
 fchs_final <- sqldf(fc_join_hs)
-
 
 fchs_final$served_date = as.Date(fchs_final$served_date, format = '%Y-%m-%d')
 fchs_final <- fchs_final[,-c(6,13)]
@@ -59,7 +58,7 @@ ggplot(fchs_final) +
   facet_wrap(~system_bin)
 
 m0 <- lm(fchs_inv$avgNutriScore ~ 1)
-m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$items + fchs_inv$hs_size + fchs_inv$total_vis_points + fchs_inv$avgInvRating + fchs_inv$num_male + fchs_inv$num_female + fchs_inv$num_african_american + fchs_inv$num_american_indians + fchs_inv$num_asian + fchs_inv$num_hawaiian_or_pacific_islander + fchs_inv$num_multi_race + fchs_inv$num_other_race + fchs_inv$num_white + fchs_inv$upTo_8thGrade + fchs_inv$hsGrad_Ged + fchs_inv$hsGrad_or_Ged_some_secondary + fchs_inv$college_grad + fchs_inv$hispanic_or_latino + fchs_inv$not_hispanic + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + fchs_inv$ethnicity + fchs_inv$system_bin, data = fchs_inv)
+m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$items + fchs_inv$total_vis_points + fchs_inv$hs_size + fchs_inv$avgInvRating + fchs_inv$gender + fchs_inv$num_african_american + fchs_inv$num_american_indians + fchs_inv$num_asian + fchs_inv$num_hawaiian_or_pacific_islander + fchs_inv$num_multi_race + fchs_inv$num_other_race + fchs_inv$num_white + fchs_inv$upTo_8thGrade + fchs_inv$hsGrad_Ged + fchs_inv$hsGrad_or_Ged_some_secondary + fchs_inv$college_grad + fchs_inv$hispanic_or_latino + fchs_inv$not_hispanic + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + fchs_inv$ethnicity + fchs_inv$system_bin, data = fchs_inv)
 
 m2 <- step(m0, scope=list(lower=m0, upper=m1, direction = "both"), alpha = 0.05)
 
