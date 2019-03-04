@@ -70,7 +70,7 @@ summary(m2)
 #summary(model)
 
 
-model <- glm(items ~ fchs_inv$system_bin + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
-             family=poisson, data=fchs_inv)
+model <- glm(items ~ fchs_final$system_bin + offset(log(as.numeric(fchs_final$hs_size))),
+             family=poisson, data=fchs_final)
 
 summary(model)
