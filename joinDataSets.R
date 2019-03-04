@@ -29,6 +29,10 @@ fchs_final$served_date = as.Date(fchs_final$served_date, format = '%Y-%m-%d')
 fchs_final <- fchs_final[,-c(6,13)]
 fchs_final$hs_size <- as.factor(fchs_final$hs_size)
 
+fchs_final$time = as.Date(fchs_final$ts, format = "%Y-%m-%d")
+dummyVar1 = c("2017-9-1")
+projectStartDate = as.Date(dummyVar1, format = "%Y-$m-%d") #Variable to hold the date when the initiative was started
+
 for(i in 1:length(fchs_final$hs_size)){
   if(fchs_final$served_date[i] > as.Date("2017-09-01", format = "%Y-%m-%d")){
     fchs_final$system_bin[i] <- as.integer(1)
@@ -61,3 +65,7 @@ m2 <- step(m0, scope=list(lower=m0, upper=m1, direction = "both"), alpha = 0.05)
 
 summary(m1)
 summary(m2)
+
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = avgNutriScore)) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, col = "Red")
+
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = items)) + geom_smooth(aes(x = time, y = items, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, col = "Red")
