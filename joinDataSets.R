@@ -2,16 +2,22 @@ library(sqldf)
 library(car)
 library(ggplot2)
 
-fc <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_foodChoices.csv', header = T) #fc raw data
-hs <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_served_households.csv', header = T) #Households raw data
-visits <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_visits.csv', header = T) #Visits raw data
-inventory_wide <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/inventory_wide.csv', header = T)
-inv_avg_nutri <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/InvAvgNutri.csv', header = T)
+fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
+hs <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_served_households.csv', header = T) #Households raw data
+visits <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_visits.csv', header = T) #Visits raw data
+inventory_wide <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory_wide.csv', header = T)
+inv_avg_nutri <- read.csv('/Users/tannerthurman/Desktop/DMARC data/InvAvgNutri.csv', header = T)
+inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
 
-inv_avg_nutri <- inv_avg_nutri[, -c(1)]
-inv_avg_nutri$StartDate <- as.Date(inv_avg_nutri$StartDate, format = '%m/%d/%Y')
-inv_avg_nutri$EndDate <- as.Date(inv_avg_nutri$EndDate, format = '%m/%d/%Y')
-hs <- hs[,-c(2)] #remove the individual_id field
+# Getting average nutri score for inventory during a time period
+inv_avg_nutri = sqldf("select StartDate, EndDate, avg(Rating) as 'avgInvRating' from inventory group by StartDate, EndDate")
+#write.csv(inventory_avg_nutri, file = "InvAvgNutri.csv")
+
+
+#inv_avg_nutri <- inv_avg_nutri[, -c(1)]
+#inv_avg_nutri$StartDate <- as.Date(inv_avg_nutri$StartDate, format = '%m/%d/%Y')
+#inv_avg_nutri$EndDate <- as.Date(inv_avg_nutri$EndDate, format = '%m/%d/%Y')
+#hs <- hs[,-c(2)] #remove the individual_id field
 
 hsdistinctquery <- 'select afn, served_date, avg(num_male) as num_male, avg(num_female) as num_female, avg(num_african_american) as num_african_american, avg(num_white) as num_white,
 avg(num_american_indian) as num_american_indians, avg(num_asian) as num_asian, avg(num_hawaiian_or_pacific_islander) as num_hawaiian_or_pacific_islander,
@@ -25,6 +31,7 @@ fcjoinvis <- 'select fcbyPurchase.*, serviceDate, individual_id, gender, race, e
 fc_vis <- sqldf(fcjoinvis)
 fc_join_hs <- "select distinct * from fc_vis join hs_done on fc_vis.serviceDate = hs_done.served_date and fc_vis.afn = hs_done.afn"
 fchs_final <- sqldf(fc_join_hs)
+
 
 fchs_final$served_date = as.Date(fchs_final$served_date, format = '%Y-%m-%d')
 fchs_final <- fchs_final[,-c(6,13)]
