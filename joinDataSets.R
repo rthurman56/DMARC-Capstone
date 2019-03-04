@@ -37,6 +37,10 @@ fchs_final$served_date = as.Date(fchs_final$served_date, format = '%Y-%m-%d')
 fchs_final <- fchs_final[,-c(6,13)]
 fchs_final$hs_size <- as.factor(fchs_final$hs_size)
 
+fchs_final$time = as.Date(fchs_final$ts, format = "%Y-%m-%d")
+dummyVar1 = c("2017-9-1")
+projectStartDate = as.Date(dummyVar1, format = "%Y-$m-%d") #Variable to hold the date when the initiative was started
+
 for(i in 1:length(fchs_final$hs_size)){
   if(fchs_final$served_date[i] >= as.Date("2017-09-01", format = "%Y-%m-%d")){   ##Needs to be greater than or equal to
     fchs_final$system_bin[i] <- as.integer(1)
@@ -71,6 +75,11 @@ summary(m1)
 summary(m2)
 
 
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = avgNutriScore)) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, col = "Red")
+
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = items)) + geom_smooth(aes(x = time, y = items, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, col = "Red")
+
+
 #model <- glm(items ~ fchs_inv$system_bin + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
    # family=poisson, data=fchs_inv)
 
@@ -81,3 +90,4 @@ model <- glm(items ~ fchs_final$system_bin + offset(log(as.numeric(fchs_final$hs
              family=poisson, data=fchs_final)
 
 summary(model)
+
