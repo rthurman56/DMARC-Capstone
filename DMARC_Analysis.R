@@ -32,6 +32,24 @@ fchs_final$served_date = as.Date(fchs_final$served_date, format = '%Y-%m-%d')
 fchs_final <- fchs_final[,-c(6,13)]
 fchs_final$hs_size <- as.factor(fchs_final$hs_size)
 
+numeric_hs_size <- as.numeric(as.character(fchs_final$hs_size))
+
+fchs_final$male_ratio <- fchs_final$num_male/numeric_hs_size
+fchs_final$female_ratio <- fchs_final$num_female/numeric_hs_size
+fchs_final$white_ratio <- fchs_final$num_white/numeric_hs_size
+fchs_final$am_indian_ratio <- fchs_final$num_american_indians/numeric_hs_size
+fchs_final$asian_ratio <- fchs_final$num_asian/numeric_hs_size
+fchs_final$hawaiian_ratio <- fchs_final$num_hawaiian_or_pacific_islander/numeric_hs_size
+fchs_final$multi_ratio <- fchs_final$num_multi_race/numeric_hs_size
+fchs_final$other_ratio <- fchs_final$num_other_race/numeric_hs_size
+fchs_final$hisp_latino_ratio <- fchs_final$hispanic_or_latino/numeric_hs_size
+fchs_final$not_hispanic_ratio <- fchs_final$not_hispanic/numeric_hs_size
+fchs_final$upTo8thGrade_ratio <- fchs_final$upTo_8thGrade/numeric_hs_size
+fchs_final$HighSchoolnon_Grad_ratio <- fchs_final$HighSchoolnon_Grad/numeric_hs_size
+fchs_final$HsGrad_Ged_ratio <- fchs_final$hsGrad_Ged/numeric_hs_size
+fchs_final$hsGradSomeSec_ratio <- fchs_final$hsGrad_or_Ged_some_secondary/numeric_hs_size
+fchs_final$college_ratio <- fchs_final$college_grad/numeric_hs_size
+
 for(i in 1:length(fchs_final$hs_size)){
   if(fchs_final$served_date[i] >= as.Date("2017-09-01", format = "%Y-%m-%d")){   ##Needs to be greater than or equal to
     fchs_final$system_bin[i] <- as.integer(1)
