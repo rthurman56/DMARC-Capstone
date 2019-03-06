@@ -75,9 +75,9 @@ summary(m1)
 summary(m2)
 
 
-ggplot(data = fchs_final) + geom_point(aes(x = time, y = avgNutriScore)) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, col = "Red")
+ggplot(data = subset(fchs_final, hs_size < 8)) + geom_point(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4), color = as.factor(hs_size)), se = FALSE) + geom_vline(xintercept = projectStartDate, col = "Red")
 
-ggplot(data = fchs_final) + geom_point(aes(x = time, y = items)) + geom_smooth(aes(x = time, y = items, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, col = "Red")
+ggplot(data = subset(fchs_final, hs_size < 8)) + geom_point(aes(x = time, y = items, alpha = I(.4))) + geom_smooth(aes(x = time, y = items, alpha = I(.4), color = as.factor(hs_size)), se = FALSE) + geom_vline(xintercept = projectStartDate, col = "Red")
 
 
 #model <- glm(items ~ fchs_inv$system_bin + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
