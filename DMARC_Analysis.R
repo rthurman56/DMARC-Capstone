@@ -1,12 +1,39 @@
 library(sqldf)
 library(car)
 library(ggplot2)
+library(plyr)
+library(ggpubr)
 
 fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
 hs <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_served_households.csv', header = T) #Households raw data
 visits <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_visits.csv', header = T) #Visits raw data
 inventory_wide <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory_wide.csv', header = T)
 inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
+
+merged <- merge(fc, visits, by = "trans_id", all.x = FALSE, all.y = FALSE)
+merged$time <- as.Date(merged$ts.x, format = "%Y-%m-%d")
+merged$time_bin <- paste("before", merged$time < "2017-09-01", sep = "")
+
+merged <- subset(merged, !nutriScoreValue %in% c("0", "ns"))
+merged$nutriScoreValue <- as.numeric(as.character(merged$nutriScoreValue))
+merged$month <- format(merged$time, "%m%Y")
+merged_agg <- ddply(merged, .(time_bin, numInHousehold, afn.y, month), summarise, nitems = length(time), mean_nutriscore = mean(nutriScoreValue))
+merged_agg$numInHousehold <- as.factor(merged_agg$numInHousehold)
+merged_agg$optimal <- as.numeric(as.character(merged_agg$numInHousehold))*36/merged_agg$nitems
+merged_agg$optimal[merged_agg$optimal > 5] <- 5
+
+merged_agg_sub <- subset(merged_agg, numInHousehold == "3" & nitems <= as.numeric(numInHousehold)*36)
+
+ggplot(data = merged_agg_sub) + geom_point(aes(y=nitems, x=mean_nutriscore, colour = time_bin), alpha = I(.4)) + geom_line(aes(y = nitems, x = optimal))
+
+ggscatterhist(
+  merged_agg_sub, y = "nitems", x = "mean_nutriscore",
+  alpha = I(.2),
+  color = "time_bin",
+  margin.plot = "density",
+  margin.params = list(fill = "time_bin", color = "black", size = 0.6),
+  title = "Purchasing Behavior for 3-person Households"
+)
 
 # Getting average nutri score for inventory during a time period
 inv_avg_nutri = sqldf("select StartDate, EndDate, avg(Rating) as 'avgInvRating' from inventory group by StartDate, EndDate")
@@ -76,7 +103,8 @@ ggplot(fchs_final) +
   facet_wrap(~system_bin)
 
 m0 <- lm(fchs_inv$avgNutriScore ~ 1)
-m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$items + fchs_inv$total_vis_points + fchs_inv$hs_size + fchs_inv$avgInvRating + fchs_inv$gender + fchs_inv$num_african_american + fchs_inv$num_american_indians + fchs_inv$num_asian + fchs_inv$num_hawaiian_or_pacific_islander + fchs_inv$num_multi_race + fchs_inv$num_other_race + fchs_inv$num_white + fchs_inv$upTo_8thGrade + fchs_inv$hsGrad_Ged + fchs_inv$hsGrad_or_Ged_some_secondary + fchs_inv$college_grad + fchs_inv$hispanic_or_latino + fchs_inv$not_hispanic + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + fchs_inv$ethnicity + fchs_inv$system_bin, data = fchs_inv)
+m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$items + fchs_inv$total_vis_points + fchs_inv$hs_size + fchs_inv$avgInvRating + 
+           fchs_inv$gender + fchs_inv$num_african_american + fchs_inv$num_american_indians + fchs_inv$num_asian + fchs_inv$num_hawaiian_or_pacific_islander + fchs_inv$num_multi_race + fchs_inv$num_other_race + fchs_inv$num_white + fchs_inv$upTo_8thGrade + fchs_inv$hsGrad_Ged + fchs_inv$hsGrad_or_Ged_some_secondary + fchs_inv$college_grad + fchs_inv$hispanic_or_latino + fchs_inv$not_hispanic + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + fchs_inv$ethnicity + fchs_inv$system_bin, data = fchs_inv)
 
 m2 <- step(m0, scope=list(lower=m0, upper=m1, direction = "both"), alpha = 0.05)
 
