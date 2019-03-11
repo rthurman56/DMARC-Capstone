@@ -2,6 +2,8 @@ library(sqldf)
 library(car)
 library(ggplot2)
 library(plyr)
+#if(!require(devtools)) install.packages("devtools")
+#devtools::install_github("kassambara/ggpubr", force = TRUE)
 library(ggpubr)
 
 fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
@@ -9,6 +11,8 @@ hs <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_served_house
 visits <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_visits.csv', header = T) #Visits raw data
 inventory_wide <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory_wide.csv', header = T)
 inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
+
+fc <- fc[which(fc$nutriScoreValue != "0" & fc$nutriScoreValue != "ns"),]
 
 merged <- merge(fc, visits, by = "trans_id", all.x = FALSE, all.y = FALSE)
 merged$time <- as.Date(merged$ts.x, format = "%Y-%m-%d")
