@@ -2,6 +2,8 @@ library(sqldf)
 library(car)
 library(ggplot2)
 library(plyr)
+#if(!require(devtools)) install.packages("devtools")
+#devtools::install_github("kassambara/ggpubr", force = TRUE)
 library(ggpubr)
 
 fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
