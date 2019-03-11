@@ -10,6 +10,8 @@ visits <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_visits.c
 inventory_wide <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory_wide.csv', header = T)
 inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
 
+fc <- fc[which(fc$nutriScoreValue != "0" & fc$nutriScoreValue != "ns"),]
+
 merged <- merge(fc, visits, by = "trans_id", all.x = FALSE, all.y = FALSE)
 merged$time <- as.Date(merged$ts.x, format = "%Y-%m-%d")
 merged$time_bin <- paste("before", merged$time < "2017-09-01", sep = "")
