@@ -5,6 +5,8 @@ library(plyr)
 #if(!require(devtools)) install.packages("devtools")
 #devtools::install_github("kassambara/ggpubr", force = TRUE)
 library(ggpubr)
+#install.packages("eeptools")
+library(eeptools)
 
 fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
 hs <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_served_households.csv', header = T) #Households raw data
@@ -93,6 +95,11 @@ for(i in 1:length(fchs_final$hs_size)){
 fchs_final$total_hs_points <- as.numeric(fchs_final$hs_size)*36
 fchs_final$total_vis_points <- fchs_final$avgNutriScore*fchs_final$items
 
+fchs_final$dob <- as.Date(fchs_final$dob, format = "%Y-%m-%d")
+fchs_final <- fchs_final[which(fchs_final$dob < Sys.Date()),]
+fchs_final$age <- age_calc(fchs_final$dob, enddate = Sys.Date(), units = "years", precise = TRUE)
+fchs_final <- fchs_final[which(fchs_final$age > 20.0),]
+
 addInvRating <- "select fchs_final.*, avgInvRating from fchs_final join inv_avg_nutri on served_date between StartDate and EndDate"
 fchs_inv <- sqldf(addInvRating)
 
@@ -107,14 +114,13 @@ ggplot(fchs_final) +
   geom_point(aes(x = total_vis_points, y = avgNutriScore, fill = hs_size, colour = hs_size), alpha = I(.4))+
   facet_wrap(~system_bin)
 
-m0 <- lm(fchs_inv$avgNutriScore ~ 1)
-m1 <- lm(fchs_inv$avgNutriScore ~ fchs_inv$avgInvRating + african_american_ratio + white_ratio + asian_ratio + upTo8thGrade_ratio + HighSchoolnon_Grad_ratio + HsGrad_Ged_ratio + other_ratio, data = fchs_inv)
+mInv <- lm(avgNutriScore ~ avgInvRating, data = fchs_inv)
+mBefore <- lm(avgNutriScore ~ age + african_american_ratio + asian_ratio + hisp_latino_ratio + white_ratio + HighSchoolnon_Grad_ratio + HsGrad_Ged_ratio + other_ratio, data = fchs_final[which(fchs_final$system_bin == "0"),])
+mAfter <- lm(avgNutriScore ~ age + african_american_ratio + asian_ratio + hisp_latino_ratio + white_ratio + HighSchoolnon_Grad_ratio + HsGrad_Ged_ratio + other_ratio, data = fchs_final[which(fchs_final$system_bin == "1"),])
 
-m2 <- step(m0, scope=list(lower=m0, upper=m1, direction = "both"), alpha = 0.05)
-
-summary(m1)
-hsisummary(m2)
-
+summary(mInv)
+summary(mBefore)
+summary(mAfter)
 
 #model <- glm(items ~ fchs_inv$system_bin + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
    # family=poisson, data=fchs_inv)
