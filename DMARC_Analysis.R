@@ -16,31 +16,6 @@ inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', h
 
 fc <- fc[which(fc$nutriScoreValue != "0" & fc$nutriScoreValue != "ns"),]
 
-merged <- merge(fc, visits, by = "trans_id", all.x = FALSE, all.y = FALSE)
-merged$time <- as.Date(merged$ts.x, format = "%Y-%m-%d")
-merged$time_bin <- paste("before", merged$time < "2017-09-01", sep = "")
-
-merged <- subset(merged, !nutriScoreValue %in% c("0", "ns"))
-merged$nutriScoreValue <- as.numeric(as.character(merged$nutriScoreValue))
-merged$month <- format(merged$time, "%m%Y")
-merged_agg <- ddply(merged, .(time_bin, numInHousehold, afn.y, month), summarise, nitems = length(time), mean_nutriscore = mean(nutriScoreValue))
-merged_agg$numInHousehold <- as.factor(merged_agg$numInHousehold)
-merged_agg$optimal <- as.numeric(as.character(merged_agg$numInHousehold))*36/merged_agg$nitems
-merged_agg$optimal[merged_agg$optimal > 5] <- 5
-
-merged_agg_sub <- subset(merged_agg, numInHousehold == "3" & nitems <= as.numeric(numInHousehold)*36)
-
-ggplot(data = merged_agg_sub) + geom_point(aes(y=nitems, x=mean_nutriscore, colour = time_bin), alpha = I(.4)) + geom_line(aes(y = nitems, x = optimal))
-
-ggscatterhist(
-  merged_agg_sub, y = "nitems", x = "mean_nutriscore",
-  alpha = I(.2),
-  color = "time_bin",
-  margin.plot = "density",
-  margin.params = list(fill = "time_bin", color = "black", size = 0.6),
-  title = "Purchasing Behavior for 3-person Households"
-)
-
 # Getting average nutri score for inventory during a time period
 inv_avg_nutri = sqldf("select StartDate, EndDate, avg(Rating) as 'avgInvRating' from inventory group by StartDate, EndDate")
 
@@ -111,9 +86,33 @@ fchs_final <- fchs_final[which(fchs_final$dob < Sys.Date()),]
 fchs_final$age <- age_calc(fchs_final$dob, enddate = Sys.Date(), units = "years", precise = TRUE)
 fchs_final <- fchs_final[which(fchs_final$age > 20.0),]
 
-
 addInvRating <- "select fchs_final.*, avgInvRating from fchs_final join inv_avg_nutri on served_date between StartDate and EndDate"
 fchs_inv <- sqldf(addInvRating)
+
+merged <- merge(fc, visits, by = "trans_id", all.x = FALSE, all.y = FALSE)
+merged$time <- as.Date(merged$ts.x, format = "%Y-%m-%d")
+merged$time_bin <- paste("before", merged$time < "2017-09-01", sep = "")
+
+merged <- subset(merged, !nutriScoreValue %in% c("0", "ns"))
+merged$nutriScoreValue <- as.numeric(as.character(merged$nutriScoreValue))
+merged$month <- format(merged$time, "%m%Y")
+merged_agg <- ddply(merged, .(time_bin, numInHousehold, afn.y, month), summarise, nitems = length(time), mean_nutriscore = mean(nutriScoreValue))
+merged_agg$numInHousehold <- as.factor(merged_agg$numInHousehold)
+merged_agg$optimal <- as.numeric(as.character(merged_agg$numInHousehold))*36/merged_agg$nitems
+merged_agg$optimal[merged_agg$optimal > 5] <- 5
+
+merged_agg_sub <- subset(merged_agg, numInHousehold == "3" & nitems <= as.numeric(numInHousehold)*36)
+
+ggplot(data = merged_agg_sub) + geom_point(aes(y=nitems, x=mean_nutriscore, colour = time_bin), alpha = I(.4)) + geom_line(aes(y = nitems, x = optimal))
+
+ggscatterhist(
+  merged_agg_sub, y = "nitems", x = "mean_nutriscore",
+  alpha = I(.2),
+  color = "time_bin",
+  margin.plot = "density",
+  margin.params = list(fill = "time_bin", color = "black", size = 0.6),
+  title = "Purchasing Behavior for 3-person Households"
+)
 
 ggplot(fchs_final) + 
   geom_point(aes(x = items, y = avgNutriScore, fill = hs_size, colour = hs_size), alpha = I(.4))
