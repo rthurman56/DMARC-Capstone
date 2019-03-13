@@ -8,19 +8,23 @@ library(ggpubr)
 #install.packages("eeptools")
 library(eeptools)
 
-fc <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_foodChoices.csv', header = T) #fc raw data
-hs <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_served_households.csv', header = T) #Households raw data
-visits <- read.csv('/Users/tannerthurman/Desktop/DMARC data/drakeExport_visits.csv', header = T) #Visits raw data
-inventory_wide <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory_wide.csv', header = T)
-inventory <- read.csv('/Users/tannerthurman/Desktop/DMARC data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
+fc <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_foodChoices.csv', header = T) #fc raw data
+hs <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_served_households.csv', header = T) #Households raw data
+visits <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_visits.csv', header = T) #Visits raw data
+inventory_wide <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/inventory_wide.csv', header = T)
+inventory <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
 
 fc <- fc[which(fc$nutriScoreValue != "0" & fc$nutriScoreValue != "ns"),]
+
+visits <- subset(visits, !race %in% c("American Indian/Alaskan Native", "Multi-Race","Not Selected", "Other", "Unknown"))
+visits <- subset(visits, !gender %in% c("Not Selected"))
 
 merged <- merge(fc, visits, by = "trans_id", all.x = FALSE, all.y = FALSE)
 merged$time <- as.Date(merged$ts.x, format = "%Y-%m-%d")
 merged$time_bin <- paste("before", merged$time < "2017-09-01", sep = "")
 
 merged <- subset(merged, !nutriScoreValue %in% c("0", "ns"))
+
 merged$nutriScoreValue <- as.numeric(as.character(merged$nutriScoreValue))
 merged$month <- format(merged$time, "%m%Y")
 merged_agg <- ddply(merged, .(time_bin, numInHousehold, afn.y, month), summarise, nitems = length(time), mean_nutriscore = mean(nutriScoreValue))
@@ -134,13 +138,22 @@ summary(mInv)
 summary(mBefore)
 summary(mAfter)
 
-#model <- glm(items ~ fchs_inv$system_bin + fchs_inv$annual_income + fchs_inv$fed_poverty_level + fchs_inv$gender + fchs_inv$race + offset(log(as.numeric(fchs_inv$hs_size))), ##This is only using data back to 08/28/2017
-   # family=poisson, data=fchs_inv)
-
-#summary(model)
-
-
-model <- glm(items ~ fchs_final$system_bin + offset(log(as.numeric(fchs_final$hs_size))),
-             family=poisson, data=fchs_final)
+model <- glm(items ~ avgInvRating + male_ratio + female_ratio + african_american_ratio + white_ratio + asian_ratio + upTo8thGrade_ratio + HsGrad_Ged_ratio + hsGradSomeSec_ratio + college_ratio + hisp_latino_ratio + not_hispanic_ratio + annual_income + fed_poverty_level + gender + race + ethnicity + system_bin + offset(log(as.numeric(hs_size))), family=poisson, data=fchs_inv)
 
 summary(model)
+
+
+
+model2 <- glm(items ~ system_bin + offset(log(as.numeric(hs_size))),
+              family=poisson, data=fchs_final)
+
+summary(model2)
+
+
+model3 <- glm(avgNutriScore ~ system_bin,
+              family= Gamma(link = "identity"), data=fchs_final)
+
+summary(model3)
+
+ggplot(fchs_final) + 
+  geom_point(aes(x = items, y = avgNutriScore, fill = race, colour = race), alpha = I(.4))
