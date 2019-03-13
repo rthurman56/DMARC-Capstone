@@ -95,10 +95,22 @@ for(i in 1:length(fchs_final$hs_size)){
 fchs_final$total_hs_points <- as.numeric(fchs_final$hs_size)*36
 fchs_final$total_vis_points <- fchs_final$avgNutriScore*fchs_final$items
 
+#separate race and gender by before and after initiative
+searchData0 = sqldf("select race, gender from fchs_final where system_bin = 0")
+searchData1 = sqldf("select race, gender from fchs_final where system_bin = 1")
+
+#compare the two data sets. If any race/gender has less than 15 data points in both, remove it
+count(searchData0$race)
+count(searchData1$race)
+
+count(searchData0$gender)
+count(searchData1$gender)
+
 fchs_final$dob <- as.Date(fchs_final$dob, format = "%Y-%m-%d")
 fchs_final <- fchs_final[which(fchs_final$dob < Sys.Date()),]
 fchs_final$age <- age_calc(fchs_final$dob, enddate = Sys.Date(), units = "years", precise = TRUE)
 fchs_final <- fchs_final[which(fchs_final$age > 20.0),]
+
 
 addInvRating <- "select fchs_final.*, avgInvRating from fchs_final join inv_avg_nutri on served_date between StartDate and EndDate"
 fchs_inv <- sqldf(addInvRating)
