@@ -128,7 +128,7 @@ summary(mAfter)
 #summary(model)
 
 
-model <- glm(items ~ fchs_final$system_bin, offset(log(as.numeric(fchs_final$hs_size))),
+model <- glm(items ~ fchs_final$system_bin + offset(log(as.numeric(fchs_final$hs_size))),
              family=poisson, data=fchs_final)
 
 summary(model)
