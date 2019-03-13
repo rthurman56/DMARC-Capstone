@@ -106,6 +106,12 @@ count(searchData1$race)
 count(searchData0$gender)
 count(searchData1$gender)
 
+start = c("2017-9-1")
+projectStartDate = as.Date(start, format = "%Y-%m-%d")
+
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4), se = FALSE)) + geom_vline(xintercept = projectStartDate, color = "Red")
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = items, alpha = I(.4))) + geom_smooth(aes(x = time, y = items, alpha = I(.4), se = FALSE)) + geom_vline(xintercept = projectStartDate, color = "Red")
+
 fchs_final$dob <- as.Date(fchs_final$dob, format = "%Y-%m-%d")
 fchs_final <- fchs_final[which(fchs_final$dob < Sys.Date()),]
 fchs_final$age <- age_calc(fchs_final$dob, enddate = Sys.Date(), units = "years", precise = TRUE)
