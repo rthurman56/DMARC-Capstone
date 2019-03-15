@@ -146,10 +146,12 @@ summary(mInv)
 summary(mBefore)
 summary(mAfter)
 
+###models predicting the number of items a person purchases###
 model <- glm(items ~ avgInvRating + male_ratio + female_ratio + african_american_ratio + white_ratio + asian_ratio + upTo8thGrade_ratio + HsGrad_Ged_ratio + hsGradSomeSec_ratio + college_ratio + hisp_latino_ratio + not_hispanic_ratio + annual_income + fed_poverty_level + gender + race + ethnicity + system_bin + offset(log(as.numeric(hs_size))), family=poisson, data=fchs_inv)
 
 summary(model)
 
+glm.diag.plots(model,iden = F) 
 
 
 model2 <- glm(items ~ system_bin + offset(log(as.numeric(hs_size))),
@@ -157,11 +159,30 @@ model2 <- glm(items ~ system_bin + offset(log(as.numeric(hs_size))),
 
 summary(model2)
 
-
-model3 <- glm(avgNutriScore ~ system_bin,
-              family= Gamma(link = "identity"), data=fchs_final)
+###Models predicting the average nutriscore of a purchase###
+model3 <- glm(avgNutriScore ~ system_bin + hs_size + college_ratio + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + hisp_latino_ratio + asian_ratio + african_american_ratio + white_ratio + female_ratio + fed_poverty_level + annual_income, family= Gamma(link = "identity"), data=fchs_final) #Add all variables to this
 
 summary(model3)
 
-ggplot(fchs_final) + 
-  geom_point(aes(x = items, y = avgNutriScore, fill = race, colour = race), alpha = I(.4))
+glm.diag.plots(model3,iden = F) #looking at residuals, qq plot, and for outliers using cooksd
+
+cooksd <- cooks.distance(model3) 
+sample_size <- nrow(fchs_final)
+influential <- as.numeric(names(cooksd)[(cooksd > (4/sample_size))])   #finding outliers based on a cut-off of 4/#observations
+fchs_final_remove_outliers <- fchs_final[-influential,] #removing outliers
+only_outliers <- fchs_final[influential,]
+
+#model 3 with outliers removed
+model4 <- glm(avgNutriScore ~ system_bin + hs_size + college_ratio + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + hisp_latino_ratio + asian_ratio + african_american_ratio + white_ratio + female_ratio + fed_poverty_level + annual_income, family= Gamma(link = "identity"), data=removeoutliers) #Add all variables to this
+
+summary(model4)
+
+#remove insignificant variables from model4
+model5 <- glm(avgNutriScore ~ system_bin + hs_size + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + asian_ratio + african_american_ratio + white_ratio, family= Gamma(link = "identity"), data=removeoutliers) #Add all variables to this
+
+summary(model5)
+
+glm.diag.plots(model5,iden = F) #looking at residuals and QQ plot
+
+pvalue = 1 - pchisq(171.56, 6685) # calculating the p-value of model 5 using Residual deviance and degrees of freedom
+pvalue
