@@ -110,11 +110,19 @@ count(searchData1$race)
 count(searchData0$gender)
 count(searchData1$gender)
 
-fchs_final$dob <- as.Date(fchs_final$dob, format = "%Y-%m-%d")
-fchs_final <- fchs_final[which(fchs_final$dob < Sys.Date()),]
-fchs_final$age <- age_calc(fchs_final$dob, enddate = Sys.Date(), units = "years", precise = TRUE)
-fchs_final <- fchs_final[which(fchs_final$age > 20.0),]
+dummyVar1 = c("2017-9-1")
+projectStartDate = as.Date(dummyVar1, format = "%Y-%m-%d")
 
+fchs_final$time = as.Date(fchs_final$ts, format = "%Y-%m-%d")
+
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = items, alpha = I(.4))) + geom_smooth(aes(x = time, y = items, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, color= "Red") + ggtitle("Change In Number of Items Purchased Over Time")
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, color= "Red") + ggtitle("Change In Average NutriScore of Purchases Over Time")
+
+#fchs_final$dob <- as.Date(fchs_final$dob, format = "%Y-%m-%d")
+#fchs_final <- fchs_final[which(fchs_final$dob < Sys.Date()),]
+#fchs_final$age <- age_calc(fchs_final$dob, enddate = Sys.Date(), units = "years", precise = TRUE)
+#fchs_final <- fchs_final[which(fchs_final$age > 20.0),]
+#These 4 lines remove every datapoint from fchs_final. Something may be wrong.
 
 addInvRating <- "select fchs_final.*, avgInvRating from fchs_final join inv_avg_nutri on served_date between StartDate and EndDate"
 fchs_inv <- sqldf(addInvRating)
