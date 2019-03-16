@@ -186,5 +186,5 @@ glm.diag.plots(model5,iden = F) #looking at residuals and QQ plot
 
 pearson_statistic = sum(residuals(model5, type = "pearson")^2)
 
-pvalue = 1 - pchisq(pearson_statistic, 6685) # calculating the p-value of model 5 using Residual deviance and degrees of freedom
+pvalue = pchisq(pearson_statistic, 6685, lower.tail = FALSE) # calculating the p-value of model 5 using Residual deviance and degrees of freedom
 pvalue
