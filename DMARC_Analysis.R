@@ -173,16 +173,18 @@ fchs_final_remove_outliers <- fchs_final[-influential,] #removing outliers
 only_outliers <- fchs_final[influential,]
 
 #model 3 with outliers removed
-model4 <- glm(avgNutriScore ~ system_bin + hs_size + college_ratio + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + hisp_latino_ratio + asian_ratio + african_american_ratio + white_ratio + female_ratio + fed_poverty_level + annual_income, family= Gamma(link = "identity"), data=removeoutliers) #Add all variables to this
+model4 <- glm(avgNutriScore ~ system_bin + hs_size + college_ratio + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + hisp_latino_ratio + asian_ratio + african_american_ratio + white_ratio + female_ratio + fed_poverty_level + annual_income, family= Gamma(link = "identity"), data=fchs_final_remove_outliers) #Add all variables to this
 
 summary(model4)
 
 #remove insignificant variables from model4
-model5 <- glm(avgNutriScore ~ system_bin + hs_size + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + asian_ratio + african_american_ratio + white_ratio, family= Gamma(link = "identity"), data=removeoutliers) #Add all variables to this
+model5 <- glm(avgNutriScore ~ system_bin + hs_size + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + asian_ratio + african_american_ratio + white_ratio, family= Gamma(link = "identity"), data=fchs_final_remove_outliers) #Add all variables to this
 
 summary(model5)
 
 glm.diag.plots(model5,iden = F) #looking at residuals and QQ plot
 
-pvalue = 1 - pchisq(171.56, 6685) # calculating the p-value of model 5 using Residual deviance and degrees of freedom
+pearson_statistic = sum(residuals(model5, type = "pearson")^2)
+
+pvalue = 1 - pchisq(pearson_statistic, 6685) # calculating the p-value of model 5 using Residual deviance and degrees of freedom
 pvalue
