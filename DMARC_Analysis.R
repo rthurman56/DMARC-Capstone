@@ -7,6 +7,7 @@ library(plyr)
 library(ggpubr)
 #install.packages("eeptools")
 library(eeptools)
+library(boot)
 
 fc <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_foodChoices.csv', header = T) #fc raw data
 hs <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_served_households.csv', header = T) #Households raw data
@@ -178,13 +179,14 @@ model4 <- glm(avgNutriScore ~ system_bin + hs_size + college_ratio + hsGradSomeS
 summary(model4)
 
 #remove insignificant variables from model4
+
 model5 <- glm(avgNutriScore ~ system_bin + hs_size + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + asian_ratio + african_american_ratio + white_ratio, family= Gamma(link = "identity"), data=fchs_final_remove_outliers) #Add all variables to this
 
 summary(model5)
 
 glm.diag.plots(model5,iden = F) #looking at residuals and QQ plot
 
-pearson_statistic = sum(residuals(model5, type = "pearson")^2)
+pearson_statistic = sum(glm.diag(model5)$rp^2)
 
 pvalue = pchisq(pearson_statistic, 6685, lower.tail = FALSE) # calculating the p-value of model 5 using Residual deviance and degrees of freedom
 pvalue
