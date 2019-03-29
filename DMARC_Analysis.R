@@ -149,7 +149,7 @@ summary(mBefore)
 summary(mAfter)
 
 ###model predicting the number of items a person purchases###
-poissonmodel <- glm(items ~ system_bin + (male_ratio + female_ratio + african_american_ratio + white_ratio + asian_ratio + upTo8thGrade_ratio + 
+poissonmodel <- glm(items ~ system_bin + (female_ratio + african_american_ratio + white_ratio + asian_ratio + upTo8thGrade_ratio + 
                                       HsGrad_Ged_ratio + hsGradSomeSec_ratio + college_ratio + hisp_latino_ratio + annual_income + 
                                       fed_poverty_level)*system_bin + offset(log(as.numeric(hs_size))), family=poisson, data=fchs_inv)
 
@@ -161,7 +161,7 @@ summary(reducedpoissonmodel)
 
 pearson_statistic1 = sum(glm.diag(reducedpoissonmodel)$rp^2)
 
-pvalue1 = pchisq(pearson_statistic1, 6291, lower.tail = FALSE) # calculating the p-value of model 5 using Residual deviance and degrees of freedom
+pvalue1 = pchisq(pearson_statistic1, 6298, lower.tail = FALSE) # calculating the p-value of reducedpoissonmodel using Residual deviance and degrees of freedom
 pvalue1
 
 #model2 <- glm(items ~ system_bin + offset(log(as.numeric(hs_size))),
