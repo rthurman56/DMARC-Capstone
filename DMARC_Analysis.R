@@ -8,6 +8,7 @@ library(ggpubr)
 #install.packages("eeptools")
 library(eeptools)
 library(boot)
+library(MASS)
 
 fc <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_foodChoices.csv', header = T) #fc raw data
 hs <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_served_households.csv', header = T) #Households raw data
@@ -147,18 +148,26 @@ summary(mInv)
 summary(mBefore)
 summary(mAfter)
 
-###models predicting the number of items a person purchases###
-model <- glm(items ~ avgInvRating + male_ratio + female_ratio + african_american_ratio + white_ratio + asian_ratio + upTo8thGrade_ratio + HsGrad_Ged_ratio + hsGradSomeSec_ratio + college_ratio + hisp_latino_ratio + not_hispanic_ratio + annual_income + fed_poverty_level + gender + race + ethnicity + system_bin + offset(log(as.numeric(hs_size))), family=poisson, data=fchs_inv)
+###model predicting the number of items a person purchases###
+poissonmodel <- glm(items ~ system_bin + (female_ratio + african_american_ratio + white_ratio + asian_ratio + upTo8thGrade_ratio + 
+                                      HsGrad_Ged_ratio + hsGradSomeSec_ratio + college_ratio + hisp_latino_ratio + annual_income + 
+                                      fed_poverty_level)*system_bin + offset(log(as.numeric(hs_size))), family=poisson, data=fchs_inv)
 
-summary(model)
+summary(poissonmodel)
 
-glm.diag.plots(model,iden = F) 
+reducedpoissonmodel <- stepAIC(poissonmodel)
 
+summary(reducedpoissonmodel)
 
-model2 <- glm(items ~ system_bin + offset(log(as.numeric(hs_size))),
-              family=poisson, data=fchs_final)
+pearson_statistic1 = sum(glm.diag(reducedpoissonmodel)$rp^2)
 
-summary(model2)
+pvalue1 = pchisq(pearson_statistic1, 6298, lower.tail = FALSE) # calculating the p-value of reducedpoissonmodel using Residual deviance and degrees of freedom
+pvalue1
+
+#model2 <- glm(items ~ system_bin + offset(log(as.numeric(hs_size))),
+              #family=poisson, data=fchs_final)
+
+#summary(model2)                                                  #remove this model
 
 ###Models predicting the average nutriscore of a purchase 3,4, and 5 comparing to see best fit###
 model3 <- glm(avgNutriScore ~ system_bin + hs_size + college_ratio + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + hisp_latino_ratio + asian_ratio + african_american_ratio + white_ratio + female_ratio + fed_poverty_level + annual_income, family= Gamma(link = "identity"), data=fchs_final)
