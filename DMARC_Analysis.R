@@ -1,20 +1,28 @@
+#install.packages("sqldf")
 library(sqldf)
-library(car)
+#install.packages("ggplot2")
 library(ggplot2)
+#install.packages("plyr")
 library(plyr)
 #if(!require(devtools)) install.packages("devtools")
 #devtools::install_github("kassambara/ggpubr", force = TRUE)
 library(ggpubr)
 #install.packages("eeptools")
 library(eeptools)
+#install.packages("boot")
 library(boot)
+#install.packages("MASS")
 library(MASS)
+
+#Read in the data
 
 fc <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_foodChoices.csv', header = T) #fc raw data
 hs <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_served_households.csv', header = T) #Households raw data
 visits <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/drakeExport_visits.csv', header = T) #Visits raw data
 inventory_wide <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/inventory_wide.csv', header = T)
 inventory <- read.csv('/Users/Parker Grant/Desktop/Stat 190/Original Data/inventory.csv', header = T)   #pass in the inventory file in here (not the wide one)
+
+#Prepare the dataset
 
 fc <- fc[which(fc$nutriScoreValue != "0" & fc$nutriScoreValue != "ns"),]
 
@@ -35,17 +43,6 @@ merged_agg$optimal <- as.numeric(as.character(merged_agg$numInHousehold))*36/mer
 merged_agg$optimal[merged_agg$optimal > 5] <- 5
 
 merged_agg_sub <- subset(merged_agg, numInHousehold == "3" & nitems <= as.numeric(numInHousehold)*36)
-
-ggplot(data = merged_agg_sub) + geom_point(aes(y=nitems, x=mean_nutriscore, colour = time_bin), alpha = I(.4)) + geom_line(aes(y = nitems, x = optimal))
-
-ggscatterhist(
-  merged_agg_sub, y = "nitems", x = "mean_nutriscore",
-  alpha = I(.2),
-  color = "time_bin",
-  margin.plot = "density",
-  margin.params = list(fill = "time_bin", color = "black", size = 0.6),
-  title = "Purchasing Behavior for 3-person Households"
-)
 
 # Getting average nutri score for inventory during a time period
 inv_avg_nutri = sqldf("select StartDate, EndDate, avg(Rating) as 'avgInvRating' from inventory group by StartDate, EndDate")
@@ -117,17 +114,29 @@ projectStartDate = as.Date(dummyVar1, format = "%Y-%m-%d")
 
 fchs_final$time = as.Date(fchs_final$ts, format = "%Y-%m-%d")
 
-ggplot(data = fchs_final) + geom_point(aes(x = time, y = items, alpha = I(.4))) + geom_smooth(aes(x = time, y = items, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, color= "Red") + ggtitle("Change In Number of Items Purchased Over Time")
-ggplot(data = fchs_final) + geom_point(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, color= "Red") + ggtitle("Change In Average NutriScore of Purchases Over Time")
-
-#fchs_final$dob <- as.Date(fchs_final$dob, format = "%Y-%m-%d")
-#fchs_final <- fchs_final[which(fchs_final$dob < Sys.Date()),]
-#fchs_final$age <- age_calc(fchs_final$dob, enddate = Sys.Date(), units = "years", precise = TRUE)
-#fchs_final <- fchs_final[which(fchs_final$age > 20.0),]
-#These 4 lines remove every datapoint from fchs_final. Something may be wrong.
-
 addInvRating <- "select fchs_final.*, avgInvRating from fchs_final join inv_avg_nutri on served_date between StartDate and EndDate"
 fchs_inv <- sqldf(addInvRating)
+
+#Exploratory plots
+
+#Items vs Average NutriScore
+ggplot(data = merged_agg_sub) + geom_point(aes(y=nitems, x=mean_nutriscore, colour = time_bin), alpha = I(.4)) + geom_line(aes(y = nitems, x = optimal))
+
+#Above plot, focused on household size 3
+ggscatterhist(
+  merged_agg_sub, y = "nitems", x = "mean_nutriscore",
+  alpha = I(.2),
+  color = "time_bin",
+  margin.plot = "density",
+  margin.params = list(fill = "time_bin", color = "black", size = 0.6),
+  title = "Purchasing Behavior for 3-person Households"
+)
+
+#Items over time
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = items, alpha = I(.4))) + geom_smooth(aes(x = time, y = items, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, color= "Red") + ggtitle("Change In Number of Items Purchased Over Time")
+
+#Average NutriScore over time
+ggplot(data = fchs_final) + geom_point(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_smooth(aes(x = time, y = avgNutriScore, alpha = I(.4))) + geom_vline(xintercept = projectStartDate, color= "Red") + ggtitle("Change In Average NutriScore of Purchases Over Time")
 
 ggplot(fchs_final) + 
   geom_point(aes(x = items, y = avgNutriScore, fill = hs_size, colour = hs_size), alpha = I(.4))
@@ -139,6 +148,8 @@ ggplot(fchs_final) +
 ggplot(fchs_final) + 
   geom_point(aes(x = total_vis_points, y = avgNutriScore, fill = hs_size, colour = hs_size), alpha = I(.4))+
   facet_wrap(~system_bin)
+
+#Models
 
 mInv <- lm(avgNutriScore ~ avgInvRating, data = fchs_inv)
 mBefore <- lm(avgNutriScore ~ age + african_american_ratio + asian_ratio + hisp_latino_ratio + white_ratio + HighSchoolnon_Grad_ratio + HsGrad_Ged_ratio + other_ratio, data = fchs_final[which(fchs_final$system_bin == "0"),])
@@ -164,10 +175,6 @@ pearson_statistic1 = sum(glm.diag(reducedpoissonmodel)$rp^2)
 pvalue1 = pchisq(pearson_statistic1, 6298, lower.tail = FALSE) # calculating the p-value of reducedpoissonmodel using Residual deviance and degrees of freedom
 pvalue1
 
-#model2 <- glm(items ~ system_bin + offset(log(as.numeric(hs_size))),
-              #family=poisson, data=fchs_final)
-
-#summary(model2)                                                  #remove this model
 
 ###Models predicting the average nutriscore of a purchase 3,4, and 5 comparing to see best fit###
 model3 <- glm(avgNutriScore ~ system_bin + hs_size + college_ratio + hsGradSomeSec_ratio + HsGrad_Ged_ratio + HighSchoolnon_Grad_ratio + upTo8thGrade_ratio + hisp_latino_ratio + asian_ratio + african_american_ratio + white_ratio + female_ratio + fed_poverty_level + annual_income, family= Gamma(link = "identity"), data=fchs_final)
